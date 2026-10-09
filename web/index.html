@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>crypto-lab · проверка гипотез на крипторынке</title>
+<link rel="stylesheet" href="style.css?v=5">
+</head>
+<body>
+
+<header id="top">
+  <div class="brand">
+    <b>crypto-lab</b>
+    <span>проверка гипотез на реальных данных · не торгует, денег не касается</span>
+  </div>
+  <div class="picker">
+    <input id="symbol" list="symbols" value="BTCUSDT" spellcheck="false" title="Монета">
+    <datalist id="symbols"></datalist>
+    <select id="interval" title="Таймфрейм">
+      <option value="15m">15 минут</option>
+      <option value="1h">1 час</option>
+      <option value="4h">4 часа</option>
+      <option value="1d" selected>1 день</option>
+      <option value="1w">1 неделя</option>
+    </select>
+    <select id="limit" title="Сколько баров">
+      <option value="300">300 баров</option>
+      <option value="500">500 баров</option>
+      <option value="1000" selected>1000 баров</option>
+    </select>
+    <button id="load" class="primary">Загрузить</button>
+    <span id="status" class="status"></span>
+  </div>
+</header>
+
+<main id="layout">
+
+  <aside id="left" class="panel">
+    <h3>Рисование</h3>
+    <div class="tools" id="tools">
+      <button data-tool="cursor" class="tool active" title="Выбор / перемещение (1)">↖<small>1</small></button>
+      <button data-tool="hline" class="tool" title="Горизонтальный уровень (2)">─<small>2</small></button>
+      <button data-tool="trend" class="tool" title="Трендлайн по двум точкам (3)">╱<small>3</small></button>
+      <button data-tool="rect" class="tool" title="Зона / канал (4)">▭<small>4</small></button>
+      <button data-tool="fib" class="tool" title="Сетка Фибоначчи (5)">≣<small>5</small></button>
+      <button data-tool="vline" class="tool" title="Вертикальная метка (6)">│<small>6</small></button>
+    </div>
+    <p class="hint" id="toolhint">Выбери инструмент и щёлкни по графику.</p>
+
+    <h3>Объекты <span id="dcount" class="badge">0</span></h3>
+    <ul id="drawlist" class="drawlist"></ul>
+    <div class="row">
+      <button id="clearDraw" class="ghost">Очистить всё</button>
+    </div>
+
+    <h3>Автопоиск на графике</h3>
+    <div class="stack">
+      <button id="findLevels">Уровни + статистика</button>
+      <button id="findTrend">Трендлайны</button>
+      <button id="findPatterns">Фигуры (двойные, ГП)</button>
+      <button id="clearOverlay" class="ghost">Убрать с графика</button>
+    </div>
+
+    <h3>Настройки расчёта</h3>
+    <label class="fld">Комиссия, % <input id="fee" type="number" value="0.1" step="0.01" min="0"></label>
+    <label class="fld">Проскальзывание, % <input id="slip" type="number" value="0" step="0.01" min="0"></label>
+    <label class="fld">Капитал, ₽ <input id="capital" type="number" value="10000" step="100" min="0"></label>
+    <p class="hint">Комиссия 0,1% — реальный taker на бирже. Именно она съедает частые стратегии.</p>
+  </aside>
+
+  <section id="center">
+    <div id="chartwrap">
+      <canvas id="chart"></canvas>
+      <div id="hud" class="hud"></div>
+      <div id="loading" class="loading hidden">считаю…</div>
+    </div>
+    <div id="underchart">
+      <div class="minichart">
+        <div class="minihead"><span>Капитал стратегии</span><span id="eqnote" class="muted"></span></div>
+        <canvas id="equity"></canvas>
+      </div>
+      <div class="miniinfo" id="metrics"></div>
+    </div>
+  </section>
+
+  <aside id="right" class="panel">
+    <h3>Гипотеза</h3>
+    <select id="strategy"></select>
+    <div id="params" class="params"></div>
+
+    <h3>Риск-правила</h3>
+    <label class="fld">Стоп-лосс, % <input id="stop" type="number" step="0.5" min="0" placeholder="нет"></label>
+    <label class="fld">Тейк-профит, % <input id="tp" type="number" step="0.5" min="0" placeholder="нет"></label>
+    <label class="fld">Трейлинг, % <input id="trail" type="number" step="0.5" min="0" placeholder="нет"></label>
+
+    <h3>Проверки</h3>
+    <div class="stack">
+      <button id="runBt" class="primary">Проверить гипотезу</button>
+      <button id="runScan">Прогнать все стратегии</button>
+      <button id="runStops">Проверить стоп-лоссы</button>
+      <button id="runRobust">Тест на случайность</button>
+      <button id="runFunding">Фандинг-карри</button>
+    </div>
+
+    <h3>Вывод</h3>
+    <div id="verdict" class="verdict">Нажми «Проверить гипотезу».</div>
+  </aside>
+</main>
+
+<footer id="bottom">
+  <div class="tabs">
+    <button data-tab="table" class="tab active">Таблица результатов</button>
+    <button data-tab="trades" class="tab">Сделки</button>
+    <button data-tab="json" class="tab">JSON</button>
+  </div>
+  <div id="out" class="out"></div>
+</footer>
+
+<div id="gate" class="gate hidden">
+  <div class="gatebox">
+    <b>crypto-lab</b>
+    <p class="hint">Введи код доступа — он сохранится в этом браузере.</p>
+    <input id="gatecode" type="password" placeholder="код доступа" autocomplete="off">
+    <button id="gatebtn" class="primary">Войти</button>
+    <p id="gateerr" class="hint"></p>
+  </div>
+</div>
+
+<script src="app.js?v=6"></script>
+</body>
+</html>
